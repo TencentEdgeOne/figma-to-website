@@ -41,7 +41,7 @@ export const preferenceOptions: LocalCodegenPreferenceOptions[] = [
     description:
       "Export code using Figma variables as colors. Example: 'bg-background' instead of 'bg-white'.",
     isDefault: true,
-    includedLanguages: ["HTML", "Tailwind", "Flutter"],
+    includedLanguages: ["HTML", "Tailwind"],
   },
   {
     itemType: "individual_select",
@@ -58,7 +58,7 @@ export const preferenceOptions: LocalCodegenPreferenceOptions[] = [
     label: "Embed Vectors",
     description:
       "Enable this to convert vector shapes to SVGs and embed them in the design. This can be a slow operation. If unchecked, shapes will be converted into rectangles.",
-    isDefault: false,
+    isDefault: true,
     includedLanguages: ["HTML", "Tailwind"],
   },
 ];
@@ -82,30 +82,7 @@ export const selectPreferenceOptions: SelectPreferenceOptions[] = [
     label: "Mode",
     options: [
       { label: "HTML", value: "html" },
-      { label: "React (JSX)", value: "jsx" },
     ],
     includedLanguages: ["Tailwind"],
-  },
-  {
-    itemType: "select",
-    propertyName: "flutterGenerationMode",
-    label: "Mode",
-    options: [
-      { label: "Full App", value: "fullApp" },
-      { label: "Widget", value: "stateless" },
-      { label: "Snippet", value: "snippet" },
-    ],
-    includedLanguages: ["Flutter"],
-  },
-  {
-    itemType: "select",
-    propertyName: "swiftUIGenerationMode",
-    label: "Mode",
-    options: [
-      { label: "Preview", value: "preview" },
-      { label: "Struct", value: "struct" },
-      { label: "Snippet", value: "snippet" },
-    ],
-    includedLanguages: ["SwiftUI"],
   },
 ];

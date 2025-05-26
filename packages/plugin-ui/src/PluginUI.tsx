@@ -1,7 +1,6 @@
 import copy from "copy-to-clipboard";
 import Preview from "./components/Preview";
 import GradientsPanel from "./components/GradientsPanel";
-import ColorsPanel from "./components/ColorsPanel";
 import CodePanel from "./components/CodePanel";
 import About from "./components/About";
 import WarningsPanel from "./components/WarningsPanel";
@@ -33,12 +32,12 @@ type PluginUIProps = {
     key: keyof PluginSettings,
     value: boolean | string | number,
   ) => void;
-  colors: SolidColorConversion[];
   gradients: LinearGradientConversion[];
   isLoading: boolean;
+  installationId: string | null;
 };
 
-const frameworks: Framework[] = ["HTML", "Tailwind", "Flutter", "SwiftUI"];
+const frameworks: Framework[] = ["Tailwind"];
 
 type FrameworkTabsProps = {
   frameworks: Framework[];
@@ -56,23 +55,21 @@ const FrameworkTabs = ({
   setShowAbout,
 }: FrameworkTabsProps) => {
   return (
-    <div className="grid grid-cols-4 sm:grid-cols-2 md:grid-cols-4 gap-1 grow">
-      {frameworks.map((tab) => (
-        <button
-          key={`tab ${tab}`}
-          className={`w-full text-sm rounded-md transition-colors font-medium ${
-            selectedFramework === tab && !showAbout
-              ? "bg-primary text-primary-foreground shadow-xs"
-              : "bg-muted hover:bg-primary/90 hover:text-primary-foreground"
-          }`}
-          onClick={() => {
-            setSelectedFramework(tab as Framework);
-            setShowAbout(false);
-          }}
-        >
-          {tab}
-        </button>
-      ))}
+    <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 gap-1 grow">
+      <button
+        key="tab Tailwind"
+        className={`w-full text-sm rounded-md transition-colors font-medium ${
+          !showAbout
+            ? "bg-primary text-primary-foreground shadow-xs"
+            : "bg-muted hover:bg-primary/90 hover:text-primary-foreground"
+        }`}
+        onClick={() => {
+          setSelectedFramework("Tailwind" as Framework);
+          setShowAbout(false);
+        }}
+      >
+        HTML
+      </button>
     </div>
   );
 };
@@ -129,6 +126,7 @@ export const PluginUI = (props: PluginUIProps) => {
           <About
             useOldPluginVersion={props.settings?.useOldPluginVersion2025}
             onPreferenceChanged={props.onPreferenceChanged}
+            installationId={props.installationId}
           />
         ) : (
           <div className="flex flex-col items-center px-4 py-2 gap-2 dark:bg-transparent">
@@ -154,15 +152,6 @@ export const PluginUI = (props: PluginUIProps) => {
               settings={props.settings}
               onPreferenceChanged={props.onPreferenceChanged}
             />
-
-            {props.colors.length > 0 && (
-              <ColorsPanel
-                colors={props.colors}
-                onColorClick={(value) => {
-                  copy(value);
-                }}
-              />
-            )}
 
             {props.gradients.length > 0 && (
               <GradientsPanel

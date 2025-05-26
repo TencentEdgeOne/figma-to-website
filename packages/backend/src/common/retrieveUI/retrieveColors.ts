@@ -1,16 +1,8 @@
 import { rgbTo6hex } from "../color";
 import {
-  swiftuiColor,
-  swiftuiGradient,
-} from "../../swiftui/builderImpl/swiftuiColor";
-import {
   tailwindColor,
   tailwindGradient,
 } from "../../tailwind/builderImpl/tailwindColor";
-import {
-  flutterColor,
-  flutterGradient,
-} from "../../flutter/builderImpl/flutterColor";
 import {
   htmlColorFromFill,
   htmlGradientFromFills,
@@ -70,15 +62,11 @@ const convertSolidColor = async (
     contrastWhite: calculateContrastRatio(fill.color, white),
   };
 
-  if (framework === "Flutter") {
-    output.exportValue = flutterColor(fill.color, opacity);
-  } else if (framework === "HTML") {
+  if (framework === "HTML") {
     output.exportValue = htmlColorFromFill(fill as any);
   } else if (framework === "Tailwind") {
     // Pass true to use CSS variable syntax for variables
     output.exportValue = tailwindColor(fill as any, true).exportValue;
-  } else if (framework === "SwiftUI") {
-    output.exportValue = swiftuiColor(fill.color, opacity);
   }
 
   return output;
@@ -96,7 +84,7 @@ export const retrieveGenericLinearGradients = async (
   await Promise.all(
     selectionColors.paints.map(async (paint) => {
       if (paint.type === "GRADIENT_LINEAR") {
-        let fill = { ...paint };
+        let fill = { ...paint } as any;
         const t = fill.gradientTransform;
         fill.gradientHandlePositions = [
           { x: t[0][2], y: t[1][2] }, // Start: (e, f)
@@ -127,21 +115,15 @@ export const retrieveGenericLinearGradients = async (
 
         let exportValue = "";
         switch (framework) {
-          case "Flutter":
-            exportValue = flutterGradient(fill);
-            break;
           case "HTML":
-            exportValue = htmlGradientFromFills(fill);
+            exportValue = htmlGradientFromFills(fill as any);
             break;
           case "Tailwind":
-            exportValue = tailwindGradient(fill);
-            break;
-          case "SwiftUI":
-            exportValue = swiftuiGradient(fill);
+            exportValue = tailwindGradient(fill as any);
             break;
         }
         colorStr.push({
-          cssPreview: htmlGradientFromFills(fill),
+          cssPreview: htmlGradientFromFills(fill as any),
           exportValue,
         });
       }

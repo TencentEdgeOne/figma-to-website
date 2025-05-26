@@ -8,6 +8,7 @@ import { TailwindDefaultBuilder } from "./tailwindDefaultBuilder";
 import { tailwindAutoLayoutProps } from "./builderImpl/tailwindAutoLayout";
 import { renderAndAttachSVG } from "../altNodes/altNodeUtils";
 import { AltNode, PluginSettings, TailwindSettings } from "types";
+import { isLikelyButton } from "./builderImpl/tailwindSize";
 
 export let localTailwindSettings: PluginSettings;
 let previousExecutionCache: {
@@ -31,7 +32,27 @@ export const tailwindMain = async (
     result = result.slice(1);
   }
 
-  return result;
+  // Generate a title from the first node name or use a default
+  let title = "Tailwind CSS";
+  if (sceneNode.length > 0 && sceneNode[0].name) {
+    title = sceneNode[0].name;
+  }
+
+  // Wrap the HTML content in a complete HTML document
+  const completeHtml = `<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${title}</title>
+    <script src="https://assets.edgeone.site/js/tailwindcss@4.1.7.js"></script>
+  </head>
+  <body>
+${indentString(result, 4)}
+  </body>
+</html>`;
+
+  return completeHtml;
 };
 
 const tailwindWidgetGenerator = async (
@@ -47,11 +68,22 @@ const tailwindWidgetGenerator = async (
 const convertNode =
   (settings: TailwindSettings) =>
   async (node: SceneNode): Promise<string> => {
-    if (settings.embedVectors && (node as any).canBeFlattened) {
-      const altNode = await renderAndAttachSVG(node);
-      if (altNode.svg) {
-        return tailwindWrapSVG(altNode, settings);
+    // Process vectors as SVGs when embedVectors is true
+    if ((node as any).canBeFlattened) {
+      if (settings.embedVectors) {
+        // Render and attach SVG content to the node
+        await renderAndAttachSVG(node);
+        if ((node as any).svg) {
+          return tailwindWrapSVG(node as any, settings);
+        }
       }
+      // Fall back to rectangle if SVG generation failed or embedVectors is false
+      return tailwindContainer(
+        { ...node, type: "RECTANGLE" } as any,
+        "",
+        "",
+        settings
+      );
     }
 
     switch (node.type) {
@@ -71,16 +103,6 @@ const convertNode =
         return tailwindLine(node, settings);
       case "SECTION":
         return tailwindSection(node, settings);
-      case "VECTOR":
-        if (!settings.embedVectors) {
-          addWarning("Vector is not supported");
-        }
-        return tailwindContainer(
-          { ...node, type: "RECTANGLE" } as any,
-          "",
-          "",
-          settings,
-        );
       default:
         addWarning(`${node.type} node is not supported`);
     }
@@ -211,6 +233,19 @@ export const tailwindContainer = (
   const builder = new TailwindDefaultBuilder(node, settings)
     .commonPositionStyles()
     .commonShapeStyles();
+    
+  // Only add special handling for elements explicitly named as buttons
+  const isExactlyButton = node.name.toLowerCase() === "button";
+  if (isExactlyButton) {
+    // Check if there is already a background color
+    const hasExplicitBgColor = builder.attributes.some(attr => 
+      attr.startsWith("bg-") && attr !== "bg-transparent");
+      
+    if (!hasExplicitBgColor) {
+      // Only add default styles for explicit buttons
+      builder.addAttributes("bg-black text-white");
+    }
+  }
 
   if (!builder.attributes && !additionalAttr) {
     return children;
@@ -218,10 +253,14 @@ export const tailwindContainer = (
 
   const build = builder.build(additionalAttr);
 
-  // Determine if we should use img tag
+  // Only use button tag for elements explicitly named as button
   let tag = "div";
   let src = "";
   const topFill = retrieveTopFill(node.fills);
+
+  if (isExactlyButton) {
+    tag = "button";
+  }
 
   if (topFill?.type === "IMAGE") {
     addWarning("Image fills are replaced with placeholders");
@@ -238,10 +277,7 @@ export const tailwindContainer = (
   // Generate appropriate HTML
   if (children) {
     return `\n<${tag}${build}${src}>${indentString(children)}\n</${tag}>`;
-  } else if (
-    SELF_CLOSING_TAGS.includes(tag) ||
-    settings.tailwindGenerationMode === "jsx"
-  ) {
+  } else if (SELF_CLOSING_TAGS.includes(tag)) {
     return `\n<${tag}${build}${src} />`;
   } else {
     return `\n<${tag}${build}${src}></${tag}>`;

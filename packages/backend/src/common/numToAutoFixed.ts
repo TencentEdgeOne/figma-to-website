@@ -1,4 +1,4 @@
-import { indentStringFlutter } from "./indentString";
+import { indentString } from "./indentString";
 
 // this is necessary to avoid a height of 4.999999523162842.
 export const numberToFixedString = (num: number): string => {
@@ -55,7 +55,7 @@ export const generateWidgetCode = (
     })
     .map(([key, value]) => {
       if (Array.isArray(value)) {
-        return `${key}: [\n${indentStringFlutter(value.join(",\n"))},\n],`;
+        return `${key}: [\n${indentString(value.join(",\n"))},\n],`;
       } else {
         return `${key}: ${
           typeof value === "number" ? numberToFixedString(value) : value
@@ -78,7 +78,7 @@ export const generateWidgetCode = (
     positionedValuesString ? ",\n" : ""
   }${propertiesArray.join("\n")}`;
 
-  return `${className}(\n${indentStringFlutter(joined.trim())}\n)`;
+  return `${className}(\n${indentString(joined.trim())}\n)`;
 };
 
 function escapeRegExp(string: string) {

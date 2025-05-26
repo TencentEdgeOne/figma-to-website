@@ -62,14 +62,14 @@ const Preview: React.FC<{
         <div className="flex items-center gap-1">
           {/* Background Color Toggle - Only show in desktop and mobile modes */}
 
-          <button
+          {/* <button
             onClick={() => setBgColor(bgColor === "white" ? "black" : "white")}
             className="p-1.5 mr-1 rounded-sm hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 transition-colors"
             aria-label={`Switch the preview to ${bgColor === "white" ? "black" : "white"} background.\nUseful to avoid black text on black background.`}
             title={`Switch the preview to ${bgColor === "white" ? "black" : "white"} background.\nUseful to avoid black text on black background.`}
           >
             <Circle size={14} fill={bgColor} className="stroke-current" />
-          </button>
+          </button> */}
 
           {/* View Mode Toggle */}
           {/* <div className="mr-1 flex bg-neutral-100 dark:bg-neutral-700 rounded-md p-0.5">
@@ -112,14 +112,14 @@ const Preview: React.FC<{
           </div> */}
 
           {/* Expand/Collapse Button */}
-          <button
+          {/* <button
             onClick={() => setExpanded(!expanded)}
             className="p-1 rounded-sm hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-500 dark:text-neutral-400 transition-colors"
             aria-label={expanded ? "Minimize preview" : "Maximize preview"}
             title={expanded ? "Minimize preview" : "Maximize preview"}
           >
             {expanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
-          </button>
+          </button> */}
         </div>
       </div>
 

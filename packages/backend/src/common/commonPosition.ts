@@ -4,13 +4,37 @@ export const getCommonPositionValue = (
   node: SceneNode,
   settings?: HTMLSettings | TailwindSettings,
 ): { x: number; y: number } => {
-  if (node.parent && node.parent.absoluteBoundingBox) {
-    if (settings?.embedVectors && node.svg) {
-      // When embedding vectors, we need to use the absolute position, since it already includes the rotation.
+  // Special case for text nodes to ensure better vertical positioning
+  if (node.type === "TEXT" && node.parent) {
+    // Check if inside auto layout
+    if ("layoutMode" in node.parent && node.parent.layoutMode !== "NONE") {
+      return { 
+        x: node.x, 
+        y: node.y 
+      };
+    }
+    
+    // Use absolute bounding box for more accurate positioning when available
+    if ("absoluteBoundingBox" in node && 
+        node.absoluteBoundingBox && 
+        "absoluteBoundingBox" in node.parent && 
+        node.parent.absoluteBoundingBox) {
       return {
         x: node.absoluteBoundingBox.x - node.parent.absoluteBoundingBox.x,
         y: node.absoluteBoundingBox.y - node.parent.absoluteBoundingBox.y,
       };
+    }
+  }
+  
+  if (node.parent && "absoluteBoundingBox" in node.parent && node.parent.absoluteBoundingBox) {
+    if (settings?.embedVectors && "svg" in node && node.svg) {
+      // When embedding vectors, we need to use the absolute position, since it already includes the rotation.
+      if ("absoluteBoundingBox" in node && node.absoluteBoundingBox) {
+        return {
+          x: node.absoluteBoundingBox.x - node.parent.absoluteBoundingBox.x,
+          y: node.absoluteBoundingBox.y - node.parent.absoluteBoundingBox.y,
+        };
+      }
     }
 
     return { x: node.x, y: node.y };

@@ -4,6 +4,7 @@ import { exportAsyncProxy } from "../common/exportAsyncProxy";
 import { addWarning } from "../common/commonConversionWarnings";
 import { getVariableNameFromColor } from "./jsonNodeConversion";
 import { htmlColor } from "../html/builderImpl/htmlColor";
+import { PLACEHOLDER_IMAGE_DOMAIN } from "../common/images";
 
 export const overrideReadonlyProperty = curry(
   <T, K extends keyof T>(prop: K, value: any, obj: T): T =>
@@ -65,10 +66,10 @@ export const renderAndAttachSVG = async (node: any) => {
         format: "SVG_STRING",
       })) as string;
       
+      let processedSvg = svg;
+      
       // Process the SVG to replace colors with variable references
       if (node.colorVariableMappings && node.colorVariableMappings.size > 0) {
-        let processedSvg = svg;
-        
         // Replace fill="COLOR" or stroke="COLOR" patterns
         const colorAttributeRegex = /(fill|stroke)="([^"]*)"/g;
         
@@ -103,11 +104,28 @@ export const renderAndAttachSVG = async (node: any) => {
           
           return match;
         });
-        
-        node.svg = processedSvg;
-      } else {
-        node.svg = svg;
       }
+      
+      // Replace base64 images with placehold.co URLs
+      // First look for pattern/image definitions using base64
+      const imageBase64Regex = /<image[^>]*xlink:href="data:image\/[^"]+base64,([^"]+)"[^>]*>/g;
+      
+      processedSvg = processedSvg.replace(imageBase64Regex, (match) => {
+        // Extract width and height from the image tag
+        const widthMatch = match.match(/width="([^"]+)"/);
+        const heightMatch = match.match(/height="([^"]+)"/);
+        
+        const width = widthMatch ? parseInt(widthMatch[1]) : 100;
+        const height = heightMatch ? parseInt(heightMatch[1]) : 100;
+        
+        // Get a placeholder image URL
+        const placeholderUrl = `${PLACEHOLDER_IMAGE_DOMAIN}/${width}x${height}`;
+        
+        // Replace the base64 data with the placeholder URL
+        return match.replace(/xlink:href="data:image\/[^"]+base64,[^"]+"/, `xlink:href="${placeholderUrl}"`);
+      });
+
+      node.svg = processedSvg;
     } catch (error) {
       addWarning(`Failed rendering SVG for ${node.name}`);
       console.error(`Error rendering SVG for ${node.type}:${node.id}`);

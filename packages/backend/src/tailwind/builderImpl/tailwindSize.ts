@@ -1,8 +1,8 @@
 import { pxToLayoutSize } from "../conversionTables";
-import { nodeSize } from "../../common/nodeWidthHeight";
-import { numberToFixedString } from "../../common/numToAutoFixed";
 import { TailwindSettings } from "types";
 import { localTailwindSettings } from "../tailwindMain";
+import { nodeSize } from "../../common/nodeWidthHeight";
+import { numberToFixedString } from "../../common/numToAutoFixed";
 
 /**
  * Formats a size value into a Tailwind class
@@ -27,6 +27,26 @@ const formatTailwindSizeValue = (
   } else {
     return `${prefix}-[${sizeFixed}px]`;
   }
+};
+
+// Helper function to determine if a node is likely a button
+export const isLikelyButton = (node: SceneNode): boolean => {
+  // Only check elements that explicitly include the button keyword in the name
+  if (node.name.toLowerCase().includes("button") || 
+      node.name.toLowerCase() === "btn") {
+    return true;
+  }
+  
+  // Parent element must be explicitly a button
+  if (node.parent && (
+    node.parent.name.toLowerCase() === "button" || 
+    node.parent.name.toLowerCase() === "btn"
+  )) {
+    return true;
+  }
+  
+  // No longer using visual feature detection, only rely on explicit naming
+  return false;
 };
 
 export const tailwindSizePartial = (

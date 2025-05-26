@@ -1,6 +1,6 @@
 import "@figma/plugin-typings";
 // Settings
-export type Framework = "Flutter" | "SwiftUI" | "HTML" | "Tailwind";
+export type Framework = "Tailwind" | "HTML";
 export interface HTMLSettings {
   showLayerNames: boolean;
   embedImages: boolean;
@@ -9,7 +9,7 @@ export interface HTMLSettings {
   htmlGenerationMode: "html" | "jsx" | "styled-components" | "svelte";
 }
 export interface TailwindSettings extends HTMLSettings {
-  tailwindGenerationMode: "html" | "jsx";
+  tailwindGenerationMode: "html";
   roundTailwindValues: boolean;
   roundTailwindColors: boolean;
   useColorVariables: boolean;
@@ -18,17 +18,9 @@ export interface TailwindSettings extends HTMLSettings {
   baseFontSize: number;
   useTailwind4: boolean;
 }
-export interface FlutterSettings {
-  flutterGenerationMode: string;
-}
-export interface SwiftUISettings {
-  swiftUIGenerationMode: string;
-}
 export interface PluginSettings
   extends HTMLSettings,
-    TailwindSettings,
-    FlutterSettings,
-    SwiftUISettings {
+    TailwindSettings {
   framework: Framework;
   useOldPluginVersion2025: boolean;
   responsiveRoot: boolean;
@@ -69,6 +61,10 @@ export type SettingsChangedMessage = Message & {
 export type ErrorMessage = Message & {
   type: "error";
   error: string;
+};
+export type InstallationIdMessage = Message & {
+  type: "installationId";
+  installationId: string;
 };
 
 // Nodes
@@ -191,11 +187,6 @@ export interface TailwindTextConversion {
 
 export type TailwindColorType = "text" | "bg" | "border" | "outline";
 
-export type SwiftUIModifier = [
-  string,
-  string | SwiftUIModifier | SwiftUIModifier[],
-];
-
 // UI
 
 export interface PreferenceOptions {
@@ -214,7 +205,7 @@ export interface LocalCodegenPreferenceOptions extends PreferenceOptions {
   itemType: "individual_select";
   propertyName: Exclude<
     keyof PluginSettings,
-    "framework" | "flutterGenerationMode" | "swiftUIGenerationMode"
+    "framework"
   >;
   description: string;
   value?: boolean;

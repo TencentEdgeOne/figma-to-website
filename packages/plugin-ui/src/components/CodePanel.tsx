@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { coldarkDark as theme } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { CopyButton } from "./CopyButton";
+import { PublishButton } from "./PublishButton";
 import EmptyState from "./EmptyState";
 import SettingsGroup from "./SettingsGroup";
 import FrameworkTabs from "./FrameworkTabs";
@@ -139,70 +140,21 @@ const CodePanel = (props: CodePanelProps) => {
           Code
         </p>
         {!isCodeEmpty && (
-          <CopyButton
-            value={prefixedCode}
-            onMouseEnter={handleButtonHover}
-            onMouseLeave={handleButtonLeave}
-          />
+          <div className="flex gap-3">
+            <PublishButton
+              value={prefixedCode}
+              onMouseEnter={handleButtonHover}
+              onMouseLeave={handleButtonLeave}
+            />
+            <CopyButton
+              value={prefixedCode}
+              onMouseEnter={handleButtonHover}
+              onMouseLeave={handleButtonLeave}
+              className="bg-gray-200 hover:bg-gray-300 dark:bg-neutral-700 dark:hover:bg-neutral-600"
+            />
+          </div>
         )}
       </div>
-
-      {!isCodeEmpty && (
-        <div className="flex flex-col p-3 bg-card border rounded-lg text-sm">
-          {/* Essential settings always shown */}
-          <SettingsGroup
-            title=""
-            settings={essentialPreferences}
-            alwaysExpanded={true}
-            selectedSettings={settings}
-            onPreferenceChanged={onPreferenceChanged}
-          />
-
-          {/* Framework-specific options */}
-          {selectableSettingsFiltered.length > 0 && (
-            <div className="mt-1 mb-2 last:mb-0">
-              <p className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                {selectedFramework} Options
-              </p>
-              {selectableSettingsFiltered.map((preference) => {
-                // Regular toggle buttons for other options
-                return (
-                  <FrameworkTabs
-                    options={preference.options}
-                    selectedValue={
-                      (settings?.[preference.propertyName] ??
-                        preference.options.find((option) => option.isDefault)
-                          ?.value ??
-                        "") as string
-                    }
-                    onChange={(value) => {
-                      onPreferenceChanged(preference.propertyName, value);
-                    }}
-                  />
-                );
-              })}
-            </div>
-          )}
-
-          {/* Styling preferences with custom prefix for Tailwind */}
-          {(stylingPreferences.length > 0 ||
-            selectedFramework === "Tailwind") && (
-            <SettingsGroup
-              title="Styling Options"
-              settings={stylingPreferences}
-              selectedSettings={settings}
-              onPreferenceChanged={onPreferenceChanged}
-            >
-              {selectedFramework === "Tailwind" && (
-                <TailwindSettings
-                  settings={settings}
-                  onPreferenceChanged={onPreferenceChanged}
-                />
-              )}
-            </SettingsGroup>
-          )}
-        </div>
-      )}
 
       <div
         className={`rounded-lg ring-green-600 transition-all duration-200 overflow-clip ${
@@ -218,11 +170,7 @@ const CodePanel = (props: CodePanelProps) => {
                 selectedFramework === "HTML" &&
                 settings?.htmlGenerationMode === "styled-components"
                   ? "jsx"
-                  : selectedFramework === "Flutter"
-                    ? "dart"
-                    : selectedFramework === "SwiftUI"
-                      ? "swift"
-                      : "html"
+                  : "html"
               }
               style={theme}
               customStyle={{

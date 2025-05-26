@@ -10,6 +10,7 @@ import {
   SolidColorConversion,
   ErrorMessage,
   SettingsChangedMessage,
+  InstallationIdMessage,
   Warning,
 } from "types";
 import { postUISettingsChangingMessage } from "./messaging";
@@ -24,6 +25,7 @@ interface AppState {
   colors: SolidColorConversion[];
   gradients: LinearGradientConversion[];
   warnings: Warning[];
+  installationId: string | null;
 }
 
 const emptyPreview = { size: { width: 0, height: 0 }, content: "" };
@@ -31,13 +33,14 @@ const emptyPreview = { size: { width: 0, height: 0 }, content: "" };
 export default function App() {
   const [state, setState] = useState<AppState>({
     code: "",
-    selectedFramework: "HTML",
+    selectedFramework: "Tailwind",
     isLoading: false,
     htmlPreview: emptyPreview,
     settings: null,
     colors: [],
     gradients: [],
     warnings: [],
+    installationId: null,
   });
 
   const rootStyles = getComputedStyle(document.documentElement);
@@ -106,6 +109,19 @@ export default function App() {
         case "selection-json":
           const json = event.data.pluginMessage.data;
           copy(JSON.stringify(json, null, 2));
+          break;
+
+        case "publishResult":
+          // This is handled directly in the PublishButton component
+          break;
+
+        case "installationId":
+          const installationIdMessage = untypedMessage as InstallationIdMessage;
+          setState((prevState) => ({
+            ...prevState,
+            installationId: installationIdMessage.installationId,
+          }));
+          break;
 
         default:
           break;
@@ -153,8 +169,8 @@ export default function App() {
         onPreferenceChanged={handlePreferencesChange}
         htmlPreview={state.htmlPreview}
         settings={state.settings}
-        colors={state.colors}
         gradients={state.gradients}
+        installationId={state.installationId}
       />
     </div>
   );

@@ -1,38 +1,57 @@
 import { tailwindCodeGenTextStyles } from "./../../../packages/backend/src/tailwind/tailwindMain";
-import {
-  run,
-  flutterMain,
-  tailwindMain,
-  swiftuiMain,
-  htmlMain,
-  postSettingsChanged,
-} from "backend";
+import { run, tailwindMain, htmlMain, postSettingsChanged } from "backend";
 import { nodesToJSON } from "backend/src/altNodes/jsonNodeConversion";
 import { retrieveGenericSolidUIColors } from "backend/src/common/retrieveUI/retrieveColors";
-import { flutterCodeGenTextStyles } from "backend/src/flutter/flutterMain";
 import { htmlCodeGenTextStyles } from "backend/src/html/htmlMain";
-import { swiftUICodeGenTextStyles } from "backend/src/swiftui/swiftuiMain";
 import { PluginSettings, SettingWillChangeMessage } from "types";
+
+// Generate UUID v4
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+// Get or generate installation ID
+let installationId: string;
+
+const getInstallationId = async (): Promise<string> => {
+  if (installationId) {
+    return installationId;
+  }
+  
+  // Try to get existing installation ID from storage
+  const storedId = await figma.clientStorage.getAsync("installationId");
+  if (storedId) {
+    installationId = storedId;
+    return installationId;
+  }
+  
+  // Generate new installation ID
+  installationId = generateUUID();
+  await figma.clientStorage.setAsync("installationId", installationId);
+  return installationId;
+};
 
 let userPluginSettings: PluginSettings;
 
 export const defaultPluginSettings: PluginSettings = {
-  framework: "HTML",
+  framework: "HTML" as const,
   showLayerNames: false,
   useOldPluginVersion2025: false,
   responsiveRoot: false,
-  flutterGenerationMode: "snippet",
-  swiftUIGenerationMode: "snippet",
   roundTailwindValues: true,
   roundTailwindColors: true,
   useColorVariables: true,
   customTailwindPrefix: "",
   embedImages: false,
-  embedVectors: false,
+  embedVectors: true,
   htmlGenerationMode: "html",
-  tailwindGenerationMode: "jsx",
+  tailwindGenerationMode: "html",
   baseFontSize: 16,
-  useTailwind4: false,
+  useTailwind4: true,
 };
 
 // A helper type guard to ensure the key belongs to the PluginSettings type
@@ -129,6 +148,13 @@ const standardMode = async () => {
   console.log("[DEBUG] standardMode - Starting standard mode initialization");
   figma.showUI(__html__, { width: 450, height: 700, themeColors: true });
   await initSettings();
+  
+  // Send installation ID to UI
+  const currentInstallationId = await getInstallationId();
+  figma.ui.postMessage({
+    type: "installationId",
+    installationId: currentInstallationId,
+  });
 
   // Listen for selection changes
   figma.on("selectionchange", () => {
@@ -192,7 +218,10 @@ const standardMode = async () => {
       }
 
       try {
-        const newNodes = await nodesToJSON(nodes, userPluginSettings);
+        const newNodes = await nodesToJSON(
+          nodes as ReadonlyArray<SceneNode>,
+          userPluginSettings,
+        );
         const removeParent = (node: any) => {
           if (node.parent) {
             delete node.parent;
@@ -216,6 +245,51 @@ const standardMode = async () => {
         type: "selection-json",
         data: nodeJson,
       });
+    } else if (msg.type === "publishCode") {
+      // Handle publish request from UI
+      console.log("[DEBUG] Received publish code request", msg.code);
+
+      try {
+        // Try to publish directly to the original address
+        const currentInstallationId = await getInstallationId();
+        const response = await fetch("https://mcp.edgeone.site/kv/set", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            'X-Installation-ID': currentInstallationId,
+          },
+          body: JSON.stringify({ value: msg.code }),
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Server error (${response.status}): ${errorText}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.url) {
+          throw new Error(data.error || "No URL returned from server");
+        }
+
+        // Send publish result back to UI
+        figma.ui.postMessage({
+          type: "publishResult",
+          success: true,
+          message: "Code published successfully!",
+          url: data.url,
+          key: data.key,
+        });
+      } catch (error) {
+        console.error("Error publishing code:", error);
+
+        // Return error message to UI and provide method to get code
+        figma.ui.postMessage({
+          type: "publishResult",
+          success: false,
+          message: (error as Error).message,
+        });
+      }
     }
   };
 };
@@ -233,7 +307,10 @@ const codegenMode = async () => {
         node,
       );
 
-      const convertedSelection = await nodesToJSON([node], userPluginSettings);
+      const convertedSelection = await nodesToJSON(
+        [node] as ReadonlyArray<SceneNode>,
+        userPluginSettings,
+      );
       console.log(
         "[DEBUG] codegen.generate - Converted selection:",
         convertedSelection,
@@ -246,7 +323,7 @@ const codegenMode = async () => {
               title: "Code",
               code: (
                 await htmlMain(
-                  convertedSelection,
+                  convertedSelection as any,
                   { ...userPluginSettings, htmlGenerationMode: "html" },
                   true,
                 )
@@ -265,7 +342,7 @@ const codegenMode = async () => {
               title: "Code",
               code: (
                 await htmlMain(
-                  convertedSelection,
+                  convertedSelection as any,
                   { ...userPluginSettings, htmlGenerationMode: "jsx" },
                   true,
                 )
@@ -285,7 +362,7 @@ const codegenMode = async () => {
               title: "Code",
               code: (
                 await htmlMain(
-                  convertedSelection,
+                  convertedSelection as any,
                   { ...userPluginSettings, htmlGenerationMode: "svelte" },
                   true,
                 )
@@ -305,7 +382,7 @@ const codegenMode = async () => {
               title: "Code",
               code: (
                 await htmlMain(
-                  convertedSelection,
+                  convertedSelection as any,
                   {
                     ...userPluginSettings,
                     htmlGenerationMode: "styled-components",
@@ -323,22 +400,15 @@ const codegenMode = async () => {
           ];
 
         case "tailwind":
-        case "tailwind_jsx":
           return [
             {
               title: "Code",
-              code: await tailwindMain(convertedSelection, {
+              code: await tailwindMain(convertedSelection as any, {
                 ...userPluginSettings,
-                tailwindGenerationMode:
-                  language === "tailwind_jsx" ? "jsx" : "html",
+                tailwindGenerationMode: "html",
               }),
               language: "HTML",
             },
-            // {
-            //   title: "Style",
-            //   code: tailwindMain(convertedSelection, defaultPluginSettings),
-            //   language: "HTML",
-            // },
             {
               title: "Tailwind Colors",
               code: (await retrieveGenericSolidUIColors("Tailwind"))
@@ -359,38 +429,6 @@ const codegenMode = async () => {
               title: "Text Styles",
               code: tailwindCodeGenTextStyles(),
               language: "HTML",
-            },
-          ];
-        case "flutter":
-          return [
-            {
-              title: "Code",
-              code: flutterMain(convertedSelection, {
-                ...userPluginSettings,
-                flutterGenerationMode: "snippet",
-              }),
-              language: "SWIFT",
-            },
-            {
-              title: "Text Styles",
-              code: flutterCodeGenTextStyles(),
-              language: "SWIFT",
-            },
-          ];
-        case "swiftUI":
-          return [
-            {
-              title: "SwiftUI",
-              code: swiftuiMain(convertedSelection, {
-                ...userPluginSettings,
-                swiftUIGenerationMode: "snippet",
-              }),
-              language: "SWIFT",
-            },
-            {
-              title: "Text Styles",
-              code: swiftUICodeGenTextStyles(),
-              language: "SWIFT",
             },
           ];
         default:

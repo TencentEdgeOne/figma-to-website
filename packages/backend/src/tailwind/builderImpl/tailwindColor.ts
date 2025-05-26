@@ -115,9 +115,17 @@ export const tailwindColorFromFills = (
   kind: TailwindColorType,
 ): string => {
   // [when testing] fills can be undefined
+  if (!fills || fills.length === 0) {
+    // Remove default black background, only add in specific cases
+    return "";
+  }
 
   const fill = retrieveTopFill(fills);
   if (fill && fill.type === "SOLID") {
+    // Ensure black colors are properly detected and converted
+    if (fill.color.r === 0 && fill.color.g === 0 && fill.color.b === 0) {
+      return `${kind}-black`;
+    }
     return tailwindSolidColor(fill, kind);
   } else if (
     fill &&

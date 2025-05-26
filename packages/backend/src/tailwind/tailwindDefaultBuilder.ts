@@ -190,15 +190,38 @@ export class TailwindDefaultBuilder {
     const { width, height, constraints } = tailwindSizePartial(node, settings);
 
     if (node.type === "TEXT") {
+      // Better handling for text auto-resize modes
       switch (node.textAutoResize) {
         case "WIDTH_AND_HEIGHT":
+          // For auto width and height, don't apply fixed dimensions 
+          // to let the content determine the size naturally
           break;
         case "HEIGHT":
-          this.addAttributes(width);
+          // For auto height, we need to set width but let height adjust naturally
+          // Check if we're in a flex container that might stretch the text
+          if ("parent" in node && 
+              node.parent && 
+              "layoutMode" in node.parent &&
+              node.parent.layoutMode !== "NONE") {
+            // In flex layouts, we might need different width handling
+            if (node.parent.layoutMode === "HORIZONTAL" && 
+                "layoutGrow" in node && 
+                node.layoutGrow > 0) {
+              // Let it grow in horizontal layout
+              this.addAttributes("flex-grow");
+            } else {
+              this.addAttributes(width);
+            }
+          } else {
+            // Standard case - fixed width
+            this.addAttributes(width);
+          }
           break;
         case "NONE":
         case "TRUNCATE":
-          this.addAttributes(width, height);
+          // Fixed dimensions for both width and height
+          // Set explicit dimensions and prevent overflow for text nodes
+          this.addAttributes(width, height, "overflow-hidden");
           break;
       }
     } else {

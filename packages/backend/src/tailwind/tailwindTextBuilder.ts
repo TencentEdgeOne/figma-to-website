@@ -12,6 +12,7 @@ import {
 import { TailwindDefaultBuilder } from "./tailwindDefaultBuilder";
 import { config } from "./tailwindConfig";
 import { StyledTextSegmentSubset } from "types";
+import { numberToFixedString } from "../common/numToAutoFixed";
 
 export class TailwindTextBuilder extends TailwindDefaultBuilder {
   getTextSegments(node: TextNode): {
@@ -208,18 +209,29 @@ export class TailwindTextBuilder extends TailwindDefaultBuilder {
    */
   textAlignVertical(): this {
     const node = this.node as TextNode;
-    switch (node.textAlignVertical) {
-      case "TOP":
-        this.addAttributes("justify-start");
-        break;
-      case "CENTER":
-        this.addAttributes("justify-center");
-        break;
-      case "BOTTOM":
-        this.addAttributes("justify-end");
-        break;
-      default:
-        break;
+    
+    // Only apply flex-based alignment if specific vertical alignment is needed
+    if (node.textAlignVertical && node.textAlignVertical !== "TOP") {
+      // Add display flex to parent container
+      this.addAttributes("flex flex-col");
+      
+      switch (node.textAlignVertical) {
+        case "CENTER":
+          this.addAttributes("justify-center");
+          break;
+        case "BOTTOM":
+          this.addAttributes("justify-end");
+          break;
+        default:
+          // TOP is default, but we explicitly add justify-start for consistency
+          this.addAttributes("justify-start");
+          break;
+      }
+      
+      // Make sure the height is properly maintained for flex alignment to work
+      if (node.height > 0) {
+        this.addAttributes(`h-[${numberToFixedString(node.height)}px]`);
+      }
     }
 
     return this;

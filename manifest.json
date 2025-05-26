@@ -1,6 +1,6 @@
 {
-  "name": "Figma to Code [HTML, Tailwind, Flutter, SwiftUI]",
-  "id": "842128343887142055",
+  "name": "Figma to Website(Powered by EdgeOne Pages)",
+  "id": "1508731505271785435",
   "api": "1.0.0",
   "main": "apps/plugin/dist/code.js",
   "ui": "apps/plugin/dist/index.html",
@@ -9,16 +9,8 @@
   "permissions": [],
   "documentAccess": "dynamic-page",
   "networkAccess": {
-    "allowedDomains": ["https://placehold.co"]
+    "allowedDomains": ["https://placehold.co", "https://mcp.edgeone.site"],
+    "reasoning": "We need access to mcp.edgeone.site to publish generated code"
   },
-  "codegenLanguages": [
-    { "label": "HTML", "value": "html" },
-    { "label": "React (JSX)", "value": "html_jsx" },
-    { "label": "Svelte", "value": "html_svelte" },
-    { "label": "Styled Components", "value": "html_styled_components" },
-    { "label": "Tailwind", "value": "tailwind" },
-    { "label": "Tailwind (JSX)", "value": "tailwind_jsx" },
-    { "label": "Flutter", "value": "flutter" },
-    { "label": "SwiftUI", "value": "swiftUI" }
-  ]
+  "codegenLanguages": [{ "label": "Tailwind", "value": "tailwind" }]
 }

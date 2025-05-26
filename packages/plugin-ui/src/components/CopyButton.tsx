@@ -52,7 +52,7 @@ export function CopyButton({
         `inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-300`,
         isCopied
           ? "bg-primary text-primary-foreground"
-          : "bg-neutral-100 dark:bg-neutral-700 dark:hover:bg-muted-foreground/30 text-foreground",
+          : "bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-700 dark:hover:bg-neutral-600 text-foreground",
         className,
         `relative`,
       )}

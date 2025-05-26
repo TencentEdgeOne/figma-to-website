@@ -394,11 +394,22 @@ const htmlWidgetGenerator = async (
 };
 
 const convertNode = (settings: HTMLSettings) => async (node: SceneNode) => {
-  if (settings.embedVectors && (node as any).canBeFlattened) {
-    const altNode = await renderAndAttachSVG(node);
-    if (altNode.svg) {
-      return htmlWrapSVG(altNode, settings);
+  // Process vectors as SVGs when embedVectors is true
+  if ((node as any).canBeFlattened) {
+    if (settings.embedVectors) {
+      // Render and attach SVG content to the node
+      await renderAndAttachSVG(node);
+      if ((node as any).svg) {
+        return htmlWrapSVG(node as any, settings);
+      }
     }
+    // Fall back to rectangle if SVG generation failed or embedVectors is false
+    return await htmlContainer(
+      { ...node, type: "RECTANGLE" } as any,
+      "",
+      [],
+      settings
+    );
   }
 
   switch (node.type) {
@@ -418,16 +429,6 @@ const convertNode = (settings: HTMLSettings) => async (node: SceneNode) => {
       return htmlText(node, settings);
     case "LINE":
       return htmlLine(node, settings);
-    case "VECTOR":
-      if (!settings.embedVectors && !isPreviewGlobal) {
-        addWarning("Vector is not supported");
-      }
-      return await htmlContainer(
-        { ...node, type: "RECTANGLE" } as any,
-        "",
-        [],
-        settings,
-      );
     default:
       addWarning(`${node.type} node is not supported`);
       return "";
@@ -611,14 +612,8 @@ const htmlContainer = async (
       const hasChildren = "children" in node && node.children.length > 0;
       let imgUrl = "";
 
-      if (
-        settings.embedImages &&
-        (settings as PluginSettings).framework === "HTML"
-      ) {
-        imgUrl = (await exportNodeAsBase64PNG(altNode, hasChildren)) ?? "";
-      } else {
-        imgUrl = getPlaceholderImage(node.width, node.height);
-      }
+      // Always use placeholder images instead of base64 for smaller HTML size
+      imgUrl = getPlaceholderImage(node.width, node.height);
 
       if (hasChildren) {
         builder.addStyles(
