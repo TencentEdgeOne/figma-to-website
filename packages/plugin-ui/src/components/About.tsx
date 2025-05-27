@@ -82,7 +82,7 @@ const About = ({
             <span>
               Open source code available on{" "}
               <a
-                href="https://github.com/TencentEdgeOne/pages-templates"
+                href="https://github.com/TencentEdgeOne/figma-to-website"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-green-600 dark:text-green-400 hover:underline"
